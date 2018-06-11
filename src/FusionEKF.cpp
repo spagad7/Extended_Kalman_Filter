@@ -28,12 +28,9 @@ FusionEKF::FusionEKF() {
         0, 0.0009, 0,
         0, 0, 0.09;
 
-  /**
-  TODO:
-    * Finish initializing the FusionEKF.
-    * Set the process and measurement noises
-  */
+  // initialize Q matrix
 
+  // initialize H_j jacobian matrix
 
 }
 
@@ -56,9 +53,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       * Remember: you'll need to convert radar from polar to cartesian coordinates.
     */
     // first measurement
-    cout << "EKF: " << endl;
-    ekf_.x = VectorXd(4);
-    ekf_.x << 1, 1, 1, 1;
+    ekf.init()
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       /**
@@ -102,6 +97,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // Radar updates
+    // calculate jacobian matrix H_j
   } else {
     // Laser updates
   }

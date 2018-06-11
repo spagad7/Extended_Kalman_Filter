@@ -29,7 +29,7 @@ public:
   /**
   * Kalman Filter update and prediction math lives in here.
   */
-  KalmanFilter ekf_;
+  KalmanFilter ekf;
 
 private:
   // check whether the tracking toolbox was initialized or not (first measurement)
