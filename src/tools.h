@@ -2,6 +2,8 @@
 #define TOOLS_H_
 #include <vector>
 #include "Eigen/Dense"
+#include <cmath>
+#include <iostream>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;

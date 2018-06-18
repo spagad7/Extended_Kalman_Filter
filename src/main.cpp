@@ -68,28 +68,30 @@ int main()
 
           // create MeasurementPackage object
           if (sensor_type.compare("L") == 0) {
-            meas_package.sensor_type_ = MeasurementPackage::LASER;
-            meas_package.raw_measurements_ = VectorXd(2);
+            meas_package.sensor_type = MeasurementPackage::LASER;
+            meas_package.raw_measurements = VectorXd(2);
             float px;
             float py;
             iss >> px;
             iss >> py;
-            meas_package.raw_measurements_ << px, py;
+            meas_package.raw_measurements << px, py;
             iss >> timestamp;
-            meas_package.timestamp_ = timestamp;
-          } else if (sensor_type.compare("R") == 0) {
-            meas_package.sensor_type_ = MeasurementPackage::RADAR;
-            meas_package.raw_measurements_ = VectorXd(3);
+            meas_package.timestamp = timestamp;
+          }
+          else if (sensor_type.compare("R") == 0) {
+            meas_package.sensor_type = MeasurementPackage::RADAR;
+            meas_package.raw_measurements = VectorXd(3);
             float ro;
             float theta;
             float ro_dot;
             iss >> ro;
             iss >> theta;
             iss >> ro_dot;
-            meas_package.raw_measurements_ << ro, theta, ro_dot;
+            meas_package.raw_measurements << ro, theta, ro_dot;
             iss >> timestamp;
-            meas_package.timestamp_ = timestamp;
-          }
+            meas_package.timestamp = timestamp;
+        }
+
 
           // get ground truth values
           float x_gt;
@@ -114,10 +116,10 @@ int main()
 
           VectorXd estimate(4);
 
-          double p_x = fusionEKF.ekf_.x(0);
-          double p_y = fusionEKF.ekf_.x(1);
-          double v1  = fusionEKF.ekf_.x(2);
-          double v2 = fusionEKF.ekf_.x(3);
+          double p_x = fusionEKF.ekf.x(0);
+          double p_y = fusionEKF.ekf.x(1);
+          double v1  = fusionEKF.ekf.x(2);
+          double v2 = fusionEKF.ekf.x(3);
 
           estimate(0) = p_x;
           estimate(1) = p_y;

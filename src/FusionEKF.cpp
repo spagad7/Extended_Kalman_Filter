@@ -6,103 +6,127 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
-/*
- * Constructor.
- */
+
 FusionEKF::FusionEKF() {
-  is_initialized_ = false;
+    is_initialized = false;
 
-  previous_timestamp_ = 0;
+    prev_timestamp = 0;
 
-  // initializing matrices
-  R_laser_ = MatrixXd(2, 2);
-  R_radar_ = MatrixXd(3, 3);
-  H_laser_ = MatrixXd(2, 4);
+    // Initialize matrices
+    x = VectorXd(4);
+    F = MatrixXd(4, 4);
+    P = MatrixXd(4, 4);
+    Q = MatrixXd(4, 4);
+    H_laser = MatrixXd(2, 4);
+    H_j = MatrixXd(3, 4);
+    h = VectorXd(3);
+    R_laser = MatrixXd(2, 2);
+    R_radar = MatrixXd(3, 3);
 
-  //measurement covariance matrix - laser
-  R_laser_ << 0.0225, 0,
-        0, 0.0225;
+    // Set x vector
+    x <<    0, 0, 0, 0;
 
-  //measurement covariance matrix - radar
-  R_radar_ << 0.09, 0, 0,
-        0, 0.0009, 0,
-        0, 0, 0.09;
+    // Set F matrix
+    F <<    1, 0, 1, 0,
+            0, 1, 0, 1,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
 
-  // initialize Q matrix
+    // Set P matrix
+    P <<    1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1000, 0,
+            0, 0, 0, 1000;
 
-  // initialize H_j jacobian matrix
+    // Set Q matrix
+    Q <<    0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0;
+
+    // Set H matrix
+    H_laser <<  1, 0, 0, 0,
+                0, 1, 0, 0;
+
+    // Set H_j Matrix
+    H_j <<  0, 0, 0, 0,
+            0 ,0, 0, 0,
+            0, 0, 0, 0;
+
+    // Set h(x) vector
+    h << 0, 0, 0;
+
+    // Measurement covariance matrix - radar
+    R_radar <<  0.09, 0, 0,
+                0, 0.0009, 0,
+                0, 0, 0.09;
+
+    // Measurement covariance matrix - laser
+    R_laser <<  0.0225, 0,
+                0, 0.0225;
+
+    // Initialize kalman filter
+    ekf.Init(x, F, P, Q, H_laser, H_j, h, R_radar, R_laser);
 
 }
 
-/**
-* Destructor.
-*/
+
 FusionEKF::~FusionEKF() {}
 
-void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
+// Function to process measurements
+void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
+{
+    // Initialize of state_vector x with the first measurement
+    if (!is_initialized)
+    {
+        prev_timestamp = measurement_pack.timestamp;
+        if (measurement_pack.sensor_type == MeasurementPackage::RADAR)
+        {
+            // Convert radar measurement from polar to cartesian coordinates
+            float rho = measurement_pack.raw_measurements(0);
+            float theta = measurement_pack.raw_measurements(1);
+            ekf.x(0) = rho * cos(theta);
+            ekf.x(1) = rho * sin(theta);
+        }
+        else if (measurement_pack.sensor_type == MeasurementPackage::LASER)
+        {
+            ekf.x(0) = measurement_pack.raw_measurements(0);
+            ekf.x(1) = measurement_pack.raw_measurements(1);
+        }
 
-  /*****************************************************************************
-   *  Initialization
-   ****************************************************************************/
-  if (!is_initialized_) {
-    /**
-    TODO:
-      * Initialize the state ekf_.x_ with the first measurement.
-      * Create the covariance matrix.
-      * Remember: you'll need to convert radar from polar to cartesian coordinates.
-    */
-    // first measurement
-    ekf.init()
-
-    if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-      /**
-      Convert radar from polar to cartesian coordinates and initialize state.
-      */
+        is_initialized = true;
+        return;
     }
-    else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-      /**
-      Initialize state.
-      */
-    }
 
-    // done initializing, no need to predict or update
-    is_initialized_ = true;
-    return;
-  }
+    // Kalman Filter - Prediction step
+    // Calculate delta_t; convert time from microseconds to seconds
+    float dt = (measurement_pack.timestamp - prev_timestamp)/1000000.0;
+    prev_timestamp = measurement_pack.timestamp;
+    // Update state transition matrix F
+    ekf.F(0, 2) = dt;
+    ekf.F(1, 3) = dt;
+    // Update process noise covariance matrix Q
+    float dt4 = pow(dt, 4)/4.0;
+    float dt3 = pow(dt, 3)/2.0;
+    float dt2 = pow(dt, 2);
+    ekf.Q <<    dt4*noise_ax,   0,              dt3*noise_ax,   0,
+                0,              dt4*noise_ay,   0,              dt3*noise_ay,
+                dt3*noise_ax,   0,              dt2*noise_ax,   0,
+                0,              dt3*noise_ay,   0,              dt2*noise_ay;
+    // Predict new state
+    ekf.Predict();
 
-  /*****************************************************************************
-   *  Prediction
-   ****************************************************************************/
+    // Kalman filter - Update step
+    if (measurement_pack.sensor_type == MeasurementPackage::RADAR)
+        // Update function for RADAR measurement
+        ekf.UpdateEKF(measurement_pack.raw_measurements);
+    else
+        // Update function for LIDAR measurement
+        ekf.Update(measurement_pack.raw_measurements);
 
-  /**
-   TODO:
-     * Update the state transition matrix F according to the new elapsed time.
-      - Time is measured in seconds.
-     * Update the process noise covariance matrix.
-     * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
-   */
-
-  ekf_.Predict();
-
-  /*****************************************************************************
-   *  Update
-   ****************************************************************************/
-
-  /**
-   TODO:
-     * Use the sensor type to perform the update step.
-     * Update the state and covariance matrices.
-   */
-
-  if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-    // Radar updates
-    // calculate jacobian matrix H_j
-  } else {
-    // Laser updates
-  }
-
-  // print the output
-  cout << "x_ = " << ekf_.x << endl;
-  cout << "P_ = " << ekf_.P << endl;
+    // Print the state vector and covariance matrix
+    cout << "x = " << ekf.x << endl;
+    cout << "P = " << ekf.P << endl;
+    cout << endl;
 }

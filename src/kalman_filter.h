@@ -2,6 +2,7 @@
 #define KALMAN_FILTER_H_
 #include "Eigen/Dense"
 #include "tools.h"
+#include <iostream>
 
 class KalmanFilter
 {
@@ -10,11 +11,11 @@ class KalmanFilter
         // state vector
         Eigen::VectorXd x;
 
-        // state covariance matrix
-        Eigen::MatrixXd P;
-
         // state transition matrix
         Eigen::MatrixXd F;
+
+        // state covariance matrix
+        Eigen::MatrixXd P;
 
         // process covariance matrix
         Eigen::MatrixXd Q;
@@ -22,14 +23,22 @@ class KalmanFilter
         // measurement matrix
         Eigen::MatrixXd H;
 
+        // Jacobian H Matrix
+        Eigen::MatrixXd H_j;
+
+        // h(x) vector for radar
+        Eigen::VectorXd h;
+
         // measurement covariance matrix
-        Eigen::MatrixXd R;
+        Eigen::MatrixXd R_radar;
+
+        Eigen::MatrixXd R_laser;
 
         // Identity matrix
         Eigen::MatrixXd I;
 
-        // Jacobian H Matrix
-        Eigen::MatrixXd H_j;
+        // Tools object
+        Tools tools;
 
         /**
         * Constructor
@@ -50,8 +59,11 @@ class KalmanFilter
         * @param R_in Measurement covariance matrix
         * @param Q_in Process covariance matrix
         */
-        void Init(Eigen::VectorXd &x_in, Eigen::MatrixXd &P_in, Eigen::MatrixXd &F_in,
-            Eigen::MatrixXd &H_in, Eigen::MatrixXd &R_in, Eigen::MatrixXd &Q_in);
+        void Init(Eigen::VectorXd &x_in, Eigen::MatrixXd &F_in,
+                Eigen::MatrixXd &P_in, Eigen::MatrixXd &Q_in,
+                Eigen::MatrixXd &H_laser_in, Eigen::MatrixXd &H_j_in,
+                Eigen::VectorXd &h_in, Eigen::MatrixXd &R_radar_in,
+                Eigen::MatrixXd &R_laser_in);
 
             /**
             * Prediction Predicts the state and the state covariance
