@@ -1,4 +1,4 @@
-# Extended Kalman Filter Project
+# Extended Kalman Filter
 
 In this project I utilize a Kalman filter to estimate the state of a moving object of interest with noisy LIDAR and RADAR measurements. This project involves the Term 2 Simulator which can be downloaded [here](https://github.com/udacity/self-driving-car-sim/releases)
 
